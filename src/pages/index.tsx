@@ -7,6 +7,7 @@ import {
   getDocs,
   getFirestore,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -19,8 +20,9 @@ import { withRedirects } from "~/server/api/firebase/withRedirects";
 import { clientApp } from "~/utils/firebase/app";
 import { type UserT, useAuthUser, type ContactT } from "~/utils/firebase/auth";
 import toast, { Toaster } from "react-hot-toast";
+import usdcToSol from "~/utils/usdcToSol";
 
-type TransferT = {
+export type TransactionT = {
   amount: number;
   recipient?: ContactT;
   sender: ContactT;
@@ -85,7 +87,7 @@ const Home: NextPage = () => {
   const [inputValue, setInputValue] = useState("");
   const [newContactEmail, setNewContactEmail] = useState("");
   const [loading, user] = useAuthUser();
-  const [transfer, setTransfer] = useState<TransferT | null>(null);
+  const [transfer, setTransfer] = useState<TransactionT | null>(null);
   const [currentAction, setCurrentAction] = useState<{
     action: action | null;
     confirmed: boolean;
@@ -122,9 +124,16 @@ const Home: NextPage = () => {
       photoURL: newContact.photoURL,
     };
 
-    await updateDoc(userDoc, {
-      contacts: arrayUnion(contactData),
-    });
+    await toast.promise(
+      updateDoc(userDoc, {
+        contacts: arrayUnion(contactData),
+      }),
+      {
+        loading: "Adding contact...",
+        success: "Contact added!",
+        error: "Failed to add contact",
+      }
+    );
   };
 
   const makeTransaction = async () => {
@@ -133,7 +142,7 @@ const Home: NextPage = () => {
     if (!transfer) return toast.error("Please specify an amount and recipient");
 
     // 890880 lamports as of 2022-09-01
-    const lamports = await connection.getMinimumBalanceForRentExemption(0);
+    // const lamports = await connection.getMinimumBalanceForRentExemption(0);
 
     if (!transfer?.recipient?.publicKey)
       return toast.error("Please add a recipient");
@@ -142,7 +151,9 @@ const Home: NextPage = () => {
       SystemProgram.transfer({
         fromPubkey: new PublicKey(transfer.sender.publicKey),
         toPubkey: new PublicKey(transfer.recipient.publicKey),
-        lamports,
+        lamports: Math.round(
+          usdcToSol({ amount: transfer.amount, currency: "USDC" }) * 1000000000
+        ),
       })
     );
 
@@ -169,6 +180,21 @@ const Home: NextPage = () => {
         signature,
       });
 
+      const db = getFirestore(clientApp);
+      const transactionCollection = collection(db, "transactions");
+      const transactionDoc = doc(transactionCollection, signature);
+
+      const transactionData: TransactionT = {
+        amount: transfer.amount,
+        recipient: transfer.recipient,
+        sender: transfer.sender,
+        timestamp: Date.now(),
+        status: "completed",
+        type: "direct",
+      };
+
+      await setDoc(transactionDoc, transactionData);
+
       setInputValue("");
       setTransfer(null);
       setCurrentAction({ action: null, confirmed: false });
@@ -183,7 +209,7 @@ const Home: NextPage = () => {
         recipientMatches.length - 1
       ]?.replace("to ", "");
 
-      const transfer: TransferT = {
+      const transfer: TransactionT = {
         amount,
         sender: {
           uid: u.uid,
@@ -279,6 +305,7 @@ const Home: NextPage = () => {
                         action: "transfer",
                       });
                       setInputValue("I want to transfer");
+                      actionParsing.transfer("I want to transfer", user);
                     }}
                   >
                     <Image
@@ -336,7 +363,7 @@ const Home: NextPage = () => {
                     <div className="overflow-hidden rounded-2xl">
                       <div className="bg-white px-10 py-4">
                         <h2 className="text-center text-xl font-semibold uppercase text-prussian-blue">
-                          Transference
+                          Transfer
                         </h2>
                       </div>
                       <div className="flex items-center justify-between bg-[#EFEFEF] px-8 py-4">

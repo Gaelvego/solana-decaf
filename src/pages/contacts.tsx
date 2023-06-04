@@ -38,7 +38,6 @@ const Contact: NextPage<ContactProps> = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      console.log(user?.contacts);
       const grouped = groupByAlphabet(user?.contacts || []);
       setGroupedContacts(grouped);
     }
