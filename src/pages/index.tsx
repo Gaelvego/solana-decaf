@@ -31,7 +31,12 @@ export type TransactionT = {
   type: "direct" | "request" | "bill_split";
 };
 
-type action = "transfer" | "addContact" | "checkBalance";
+type action =
+  | "transfer"
+  | "addContact"
+  | "checkBalance"
+  | "createInvoice"
+  | "splitBill";
 
 const promptKeywords: Record<action, string[]> = {
   transfer: [
@@ -71,6 +76,56 @@ const promptKeywords: Record<action, string[]> = {
     "status",
     "request",
     "remaining",
+  ],
+  createInvoice: [
+    "send me the payment",
+    "send me the money",
+    "send me the funds",
+    "give me the payment",
+    "give me the money",
+    "give me the funds",
+    "pay me back",
+    "pay me what you owe",
+    "pay me the money",
+    "pay me the funds",
+    "reimburse me",
+    "settle up with me",
+    "square up with me",
+    "hand me",
+  ],
+  splitBill: [
+    "split",
+    "divide",
+    "share",
+    "allocate",
+    "apportion",
+    "distribute",
+    "separate",
+    "split up",
+    "break up",
+    "divvy up",
+    "distribute evenly",
+    "divide equally",
+    "share equally",
+    "each of us",
+    "each need to pay",
+    "each",
+    "your part",
+    "your share",
+    "owes me",
+    "their",
+    "drop me their",
+    "hit me their",
+    "gimme their",
+    "slide me",
+    "cover up their",
+    "hand over",
+    "hand over their",
+    "chip in your",
+    "chip in their",
+    "chip in his",
+    "chip in its",
+    "chip in their",
   ],
 };
 
@@ -250,6 +305,12 @@ const Home: NextPage = () => {
       return null;
     },
     checkBalance: () => {
+      return null;
+    },
+    createInvoice: () => {
+      return null;
+    },
+    splitBill: () => {
       return null;
     },
   };

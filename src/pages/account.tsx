@@ -1,4 +1,3 @@
-import { getFirestore } from "firebase/firestore";
 import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
@@ -6,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { withRedirects } from "~/server/api/firebase/withRedirects";
 import { api } from "~/utils/api";
-import { clientApp } from "~/utils/firebase/app";
 import { signOut, useAuthUser } from "~/utils/firebase/auth";
 import usdcToSol from "~/utils/usdcToSol";
 import Transactions from "~/components/transactions/Transactions";
@@ -15,21 +13,20 @@ interface AccountProps {
   children?: React.ReactNode;
 }
 
+export const USDollar = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
 const Account: NextPage<AccountProps> = () => {
   const [loading, user] = useAuthUser();
   const router = useRouter();
-  const db = getFirestore(clientApp);
 
   const { data: balanceData } = api.example.getBalance.useQuery({
     publicKey: user?.publicKey,
   });
 
   if (loading || !user) return <div>Loading...</div>;
-
-  const USDollar = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
 
   return (
     <>
@@ -109,7 +106,9 @@ const Account: NextPage<AccountProps> = () => {
           </div>
 
           <div>
-            <h2>Latest transactions</h2>
+            <h2 className="pb-4 pt-8 text-2xl font-medium text-prussian-blue">
+              Latest transactions
+            </h2>
             <div className="rounded-2xl bg-gradient-to-br from-[#79D6F4] to-[#70DEE0] p-4">
               {" "}
               {user && <Transactions user={user} />}

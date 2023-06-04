@@ -1,8 +1,9 @@
 import { getFirestore, or } from "firebase/firestore";
 import { collection, orderBy, query, where } from "firebase/firestore";
-import React, { useEffect } from "react";
+import React from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { type TransactionT } from "~/pages";
+import { USDollar } from "~/pages/account";
 import { clientApp } from "~/utils/firebase/app";
 import { type UserT } from "~/utils/firebase/auth";
 
@@ -33,10 +34,37 @@ const Transactions: React.FC<TransactionsProps> = ({ user }) => {
           {recipientTransactions.map((t) => {
             const tr = t as TransactionT;
             return (
-              <div key={tr.timestamp} className="bg-white">
-                <picture>
-                  <img src={tr.sender.photoURL} alt="" />
-                </picture>
+              <div
+                key={tr.timestamp}
+                className="flex items-center justify-between space-x-4 rounded-2xl bg-white p-4 text-prussian-blue"
+              >
+                <div className="flex items-center space-x-4">
+                  <picture>
+                    <img
+                      className="h-16 w-16 overflow-hidden rounded-full"
+                      src={tr.sender.photoURL}
+                      alt=""
+                    />
+                  </picture>
+                  <div>
+                    <p className="text-xl">{tr.sender.displayName}</p>
+                    {/* Date in format: 4 Jan 2023 - 5:40 PM  */}
+                    <p className="text-xs">
+                      {new Date(tr.timestamp).toDateString().slice(4)} -{" "}
+                      {new Date(tr.timestamp).toTimeString().split(" ")[0]}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p>
+                    {user.uid == tr.sender.uid ? "-" : "+"}
+                    {USDollar.format(tr.amount)} USDC
+                  </p>
+                  <p className="text-right text-xs">
+                    {user.uid == tr.sender.uid ? "Transfered" : "Received"}{" "}
+                    {tr.type == "bill_split" && "- bill split"}
+                  </p>
+                </div>
               </div>
             );
           })}
