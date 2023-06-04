@@ -8,6 +8,11 @@ import { api } from "~/utils/api";
 import { signOut, useAuthUser } from "~/utils/firebase/auth";
 import usdcToSol from "~/utils/usdcToSol";
 import Transactions from "~/components/transactions/Transactions";
+import { useCollectionData } from "react-firebase-hooks/firestore";
+import { and, collection, query, where } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
+import { clientApp } from "~/utils/firebase/app";
+import { TransactionT } from ".";
 
 interface AccountProps {
   children?: React.ReactNode;
@@ -21,6 +26,18 @@ export const USDollar = new Intl.NumberFormat("en-US", {
 const Account: NextPage<AccountProps> = () => {
   const [loading, user] = useAuthUser();
   const router = useRouter();
+  const db = getFirestore(clientApp);
+
+  const [invoices, loadingInvoices, errorInvoices] = useCollectionData(
+    query(
+      collection(db, "transactions"),
+      and(
+        where("sender.uid", "==", user?.uid || ""),
+        where("type", "==", "request"),
+        where("status", "==", "pending")
+      )
+    )
+  );
 
   const { data: balanceData } = api.example.getBalance.useQuery({
     publicKey: user?.publicKey,
@@ -105,6 +122,38 @@ const Account: NextPage<AccountProps> = () => {
             </div>
           </div>
 
+          <div>
+            <h2 className="pb-4 pt-8 text-2xl font-medium text-prussian-blue">
+              Notifications
+            </h2>
+            <p>{errorInvoices && errorInvoices.message}</p>
+            <div className="rounded-2xl bg-gradient-to-br from-[#7DD2FD] to-[#5DF1B3]/[0.17]">
+              <div className="bg-white/30  p-4">
+                {invoices &&
+                  invoices.map((i) => {
+                    const inv = i as TransactionT;
+
+                    return (
+                      <div key={inv.timestamp}>
+                        <p className="text-center text-xl">
+                          &quot;{inv.recipient?.displayName.split(" ")[0]} has
+                          sent you a request for {USDollar.format(inv.amount)}{" "}
+                          USDC&quot;
+                        </p>
+                        <div className="flex items-center justify-center space-x-4 pt-4">
+                          <button className="rounded-full bg-[#75DAEB] px-12 py-1 text-center lowercase">
+                            Accept
+                          </button>
+                          <button className="rounded-full bg-[#75DAEB] px-12 py-1 text-center lowercase">
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
           <div>
             <h2 className="pb-4 pt-8 text-2xl font-medium text-prussian-blue">
               Latest transactions

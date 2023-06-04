@@ -260,8 +260,19 @@ const Home: NextPage = () => {
     } catch (error) {}
   };
 
-  const makeInvoice = () => {
-    console.log(invoice);
+  const makeInvoice = async () => {
+    if (invoice && invoice.sender && invoice.recipient) {
+      const db = getFirestore(clientApp);
+
+      const transactionCollection = collection(db, "transactions");
+      const transactionDoc = doc(transactionCollection);
+
+      await toast.promise(setDoc(transactionDoc, invoice), {
+        error: "Failed to make the invoice",
+        loading: "Creating invoice",
+        success: "Invoice created!",
+      });
+    }
   };
 
   const actionParsing: Record<action, (s: string, u: UserT) => unknown> = {
