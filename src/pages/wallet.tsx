@@ -23,7 +23,6 @@ const WalletPage: NextPage<WalletPageProps> = () => {
 
   useEffect(() => {
     if (publicKey && !loading && user) {
-      console.log("this runs once with", publicKey.toString());
       const db = getFirestore(clientApp);
       const userDocRef = doc(db, "users", user.uid);
       setDoc(userDocRef, { publicKey: publicKey.toString() }, { merge: true })

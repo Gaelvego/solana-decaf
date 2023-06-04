@@ -9,7 +9,7 @@ const shyft = new ShyftSdk({
 });
 
 export const mainRouter = createTRPCRouter({
-  shyft: publicProcedure
+  getBalance: publicProcedure
     .input(z.object({ publicKey: z.string().nonempty() }))
     .query(async ({ input }) => {
       const balance = await shyft.wallet.getBalance({

@@ -6,12 +6,27 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { clientApp } from "./app";
-import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
+  setDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { z } from "zod";
 
 const auth = getAuth(clientApp);
+
+export const contactSchema = z.object({
+  uid: z.string(),
+  displayName: z.string(),
+  email: z.string(),
+  publicKey: z.string(),
+});
+
+export type ContactT = z.infer<typeof contactSchema>;
 
 export const userSchema = z.object({
   uid: z.string(),
@@ -21,6 +36,7 @@ export const userSchema = z.object({
   photoURL: z.string(),
   createdAt: z.number(),
   publicKey: z.string(),
+  contacts: z.array(contactSchema),
 });
 
 export type UserT = z.infer<typeof userSchema>;
@@ -56,36 +72,41 @@ const useAuthUser = (o?: {
 
   // Update the user in Firestore
   useEffect(() => {
-    const setUserData = async (user: FirebaseUser) => {
+    const setUserData = (user: FirebaseUser) => {
       const userRef = doc(db, `users/${user.uid}`);
-      const userDoc = await getDoc(userRef);
+      const unsub = onSnapshot(userRef, (userDoc) => {
+        if (userDoc.exists()) {
+          setLoading(false);
 
-      if (userDoc.exists()) {
-        setLoading(false);
+          const parsedUser = userSchema.safeParse(userDoc.data());
 
-        const parsedUser = userSchema.safeParse(userDoc.data());
-
-        if (parsedUser.success) {
-          setUser(parsedUser.data);
+          if (parsedUser.success) {
+            setUser(parsedUser.data);
+          } else {
+            setUser(null);
+          }
         } else {
-          setUser(null);
-        }
-      } else {
-        const initialUser: UserT = {
-          displayName: user.displayName || "",
-          email: user.email || "",
-          emailVerified: user.emailVerified,
-          photoURL: user.photoURL || "",
-          uid: user.uid,
-          createdAt: Date.now(),
-          publicKey: "",
-        };
+          const initialUser: UserT = {
+            displayName: user.displayName || "",
+            email: user.email || "",
+            emailVerified: user.emailVerified,
+            photoURL: user.photoURL || "",
+            uid: user.uid,
+            createdAt: Date.now(),
+            publicKey: "",
+            contacts: [],
+          };
 
-        void setDoc(userRef, initialUser, { merge: true });
-        setLoading(false);
-        setUser(initialUser);
-      }
+          void setDoc(userRef, initialUser, { merge: true });
+          setLoading(false);
+          setUser(initialUser);
+        }
+      });
+
+      return unsub;
     };
+
+    let unsubscribe: () => void = () => null;
 
     if (authLoading) {
       // Still loading
@@ -93,13 +114,17 @@ const useAuthUser = (o?: {
     } else {
       if (authUser) {
         // Auth user found => set user data
-        void setUserData(authUser);
+        unsubscribe = setUserData(authUser);
       } else {
         // No auth user found => set user to null
         setUser(null);
         setLoading(false);
       }
     }
+
+    return () => {
+      unsubscribe();
+    };
   }, [authLoading, authUser, db]);
 
   return [loading, user, authUser || null];
@@ -143,7 +168,6 @@ const signIn = async (o: {
 
   if (!userDoc.exists()) {
     // Create the user in Firestore
-    console.log("Creating user in Firestore");
     const initialUser: UserT = {
       displayName: providerResponse.user.displayName || "",
       email: providerResponse.user.email || "",
@@ -152,6 +176,7 @@ const signIn = async (o: {
       uid: providerResponse.user.uid,
       createdAt: Date.now(),
       publicKey: "",
+      contacts: [],
     };
 
     await setDoc(userRef, initialUser, { merge: true });

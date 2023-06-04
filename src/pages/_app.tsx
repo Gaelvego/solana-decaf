@@ -6,7 +6,9 @@ import { Wallet } from "~/components/wallet/Wallet";
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <Wallet>
-      <Component {...pageProps} />
+      <div className="font-[Poppins]">
+        <Component {...pageProps} />
+      </div>
     </Wallet>
   );
 };

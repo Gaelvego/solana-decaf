@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.0.4",
     "@shyft-to/js": "^0.2.13",
     "@solana/wallet-adapter-base": "^0.9.22",
     "@solana/wallet-adapter-react": "^0.15.32",
@@ -21,15 +22,21 @@
     "@trpc/next": "^10.26.0",
     "@trpc/react-query": "^10.26.0",
     "@trpc/server": "^10.26.0",
+    "class-variance-authority": "^0.6.0",
+    "clsx": "^1.2.1",
+    "cmdk": "^0.2.0",
     "firebase": "^9.22.1",
     "firebase-admin": "^11.9.0",
     "lodash": "^4.17.21",
+    "lucide-react": "^0.233.0",
     "next": "^13.4.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-firebase-hooks": "^5.1.1",
     "react-hot-toast": "^2.4.1",
     "superjson": "1.12.2",
+    "tailwind-merge": "^1.13.0",
+    "tailwindcss-animate": "^1.0.5",
     "zod": "^3.21.4"
   },
   "devDependencies": {
