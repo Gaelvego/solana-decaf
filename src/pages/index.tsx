@@ -25,7 +25,7 @@ import usdcToSol from "~/utils/usdcToSol";
 export type TransactionT = {
   amount: number;
   recipient?: ContactT;
-  sender: ContactT;
+  sender?: ContactT;
   timestamp: number;
   status: "pending" | "completed" | "failed";
   type: "direct" | "request" | "bill_split";
@@ -79,6 +79,9 @@ const promptKeywords: Record<action, string[]> = {
   ],
   createInvoice: [
     "send me the payment",
+    "send me",
+    "pay",
+    "invoice",
     "send me the money",
     "send me the funds",
     "give me the payment",
@@ -143,6 +146,7 @@ const Home: NextPage = () => {
   const [newContactEmail, setNewContactEmail] = useState("");
   const [loading, user] = useAuthUser();
   const [transfer, setTransfer] = useState<TransactionT | null>(null);
+  const [invoice, setInvoice] = useState<TransactionT | null>(null);
   const [currentAction, setCurrentAction] = useState<{
     action: action | null;
     confirmed: boolean;
@@ -256,6 +260,10 @@ const Home: NextPage = () => {
     } catch (error) {}
   };
 
+  const makeInvoice = () => {
+    console.log(invoice);
+  };
+
   const actionParsing: Record<action, (s: string, u: UserT) => unknown> = {
     transfer: (s, u) => {
       const amount = parseFloat(s.match(/(\d+)/)?.[0] || "0");
@@ -307,8 +315,21 @@ const Home: NextPage = () => {
     checkBalance: () => {
       return null;
     },
-    createInvoice: () => {
-      return null;
+    createInvoice: (s, u) => {
+      setInvoice({
+        amount: 0,
+        recipient: {
+          displayName: u.displayName,
+          email: u.email,
+          photoURL: u.photoURL,
+          publicKey: u.publicKey,
+          uid: u.uid,
+        },
+        sender: undefined,
+        status: "pending",
+        timestamp: Date.now(),
+        type: "request",
+      });
     },
     splitBill: () => {
       return null;
@@ -512,6 +533,76 @@ const Home: NextPage = () => {
                         </button>
                       </div>
                     </div>
+                  )}
+
+                  {currentAction.action === "createInvoice" && invoice && (
+                    <div className="overflow-hidden rounded-2xl">
+                      <div className="bg-white px-10 py-4">
+                        <h2 className="text-center text-xl font-semibold uppercase text-prussian-blue">
+                          Invoice
+                        </h2>
+                      </div>
+                      <div className="flex items-center justify-between bg-[#EFEFEF] px-8 py-4">
+                        <p className="font-semibold text-prussian-blue">
+                          Send invoice to:
+                        </p>
+
+                        <select
+                          className="block w-full max-w-[11rem] rounded-full border bg-non-photo-blue px-6 py-2.5 text-left text-sm text-prussian-blue focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                          value={JSON.stringify(invoice.sender)}
+                          onChange={(e) => {
+                            if (!(e.target.value === "--SELECT--")) {
+                              const contact = JSON.parse(
+                                e.target.value
+                              ) as UserT;
+                              setInvoice({ ...invoice, sender: contact });
+                            }
+                          }}
+                          defaultValue={"--SELECT--"}
+                        >
+                          {user.contacts.map((c) => (
+                            <option key={c.uid} value={JSON.stringify(c)}>
+                              {c.displayName}
+                            </option>
+                          ))}
+                          <option>--SELECT--</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center justify-between bg-white px-8 py-4">
+                        <p className="font-semibold text-prussian-blue">
+                          Amount:
+                        </p>
+                        <div>
+                          <input
+                            onChange={(e) => {
+                              setInvoice({
+                                ...invoice,
+                                amount: parseFloat(e.target.value),
+                              });
+                            }}
+                            value={invoice.amount}
+                            type="number"
+                            className="block w-full max-w-[11rem] rounded-full border bg-non-photo-blue px-6 py-2.5 text-left text-sm text-prussian-blue focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center bg-[#EFEFEF] px-8 py-4">
+                        <button
+                          onClick={() => {
+                            void makeInvoice();
+                          }}
+                          className="transform rounded-full bg-gradient-to-l from-ruddy-blue to-pale-azure px-6 py-2.5 text-prussian-blue transition-all hover:scale-105 active:scale-95"
+                        >
+                          Send Invoice
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {currentAction.action === "checkBalance" && (
+                    <div>Balance UI</div>
+                  )}
+                  {currentAction.action === "splitBill" && (
+                    <div>Splitbill ui</div>
                   )}
                 </div>
               )}

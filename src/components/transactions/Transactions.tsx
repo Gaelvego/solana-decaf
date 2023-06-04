@@ -42,12 +42,12 @@ const Transactions: React.FC<TransactionsProps> = ({ user }) => {
                   <picture>
                     <img
                       className="h-16 w-16 overflow-hidden rounded-full"
-                      src={tr.sender.photoURL}
+                      src={tr.sender?.photoURL}
                       alt=""
                     />
                   </picture>
                   <div>
-                    <p className="text-xl">{tr.sender.displayName}</p>
+                    <p className="text-xl">{tr.sender?.displayName}</p>
                     {/* Date in format: 4 Jan 2023 - 5:40 PM  */}
                     <p className="text-xs">
                       {new Date(tr.timestamp).toDateString().slice(4)} -{" "}
@@ -57,11 +57,11 @@ const Transactions: React.FC<TransactionsProps> = ({ user }) => {
                 </div>
                 <div>
                   <p>
-                    {user.uid == tr.sender.uid ? "-" : "+"}
+                    {user.uid == tr.sender?.uid ? "-" : "+"}
                     {USDollar.format(tr.amount)} USDC
                   </p>
                   <p className="text-right text-xs">
-                    {user.uid == tr.sender.uid ? "Transfered" : "Received"}{" "}
+                    {user.uid == tr.sender?.uid ? "Transfered" : "Received"}{" "}
                     {tr.type == "bill_split" && "- bill split"}
                   </p>
                 </div>
