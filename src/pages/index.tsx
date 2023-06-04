@@ -269,6 +269,61 @@ const Home: NextPage = () => {
                   setInputValue(e.target.value);
                 }}
               />
+              {!currentAction.action && (
+                <div className="mt-8 grid grid-cols-3 gap-x-2 ">
+                  <div
+                    className="flex flex-col items-center justify-center space-y-4 rounded-2xl bg-white px-2 py-8"
+                    onClick={() => {
+                      setCurrentAction({
+                        ...currentAction,
+                        action: "transfer",
+                      });
+                      setInputValue("I want to transfer");
+                    }}
+                  >
+                    <Image
+                      src="/transfer.png"
+                      height={100}
+                      width={100}
+                      alt=""
+                    />
+                    <p className="text-center text-sm font-medium text-prussian-blue">
+                      Transfer money
+                    </p>
+                  </div>
+                  <div
+                    className="flex flex-col items-center justify-center space-y-4 rounded-2xl bg-white px-2 py-8"
+                    onClick={() => {
+                      setCurrentAction({
+                        ...currentAction,
+                        action: "transfer",
+                      });
+                      setInputValue("I want to receive money");
+                    }}
+                  >
+                    <Image src="/receive.png" height={100} width={100} alt="" />
+                    <p className="text-center text-sm font-medium text-prussian-blue">
+                      Receive money
+                    </p>
+                  </div>
+                  <div
+                    className="flex flex-col items-center justify-center space-y-4 rounded-2xl bg-white px-2 py-8"
+                    onClick={() => {
+                      setCurrentAction({
+                        ...currentAction,
+                        action: "transfer",
+                      });
+                      setInputValue("I want to split a bill");
+                    }}
+                  >
+                    <Image src="/split.png" height={100} width={100} alt="" />
+                    <p className="text-center text-sm font-medium text-prussian-blue">
+                      Split Bills
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {currentAction.action && (
                 <div className="flex flex-col space-y-4 pt-4">
                   {/* <p className="bg-red-400">
