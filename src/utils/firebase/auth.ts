@@ -182,7 +182,7 @@ function deleteCookie(name: string) {
   createCookie(name, "", new Date(0));
 }
 
-const signOut = async (o: { onSuccess?: () => void }) => {
+const signOut = async (o: { onSuccess?: () => unknown }) => {
   await auth.signOut();
 
   deleteCookie("authToken");
