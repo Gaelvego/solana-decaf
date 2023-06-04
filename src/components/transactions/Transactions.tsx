@@ -56,13 +56,14 @@ const Transactions: React.FC<TransactionsProps> = ({ user }) => {
                   </div>
                 </div>
                 <div>
-                  <p>
+                  <p className="text-right">
                     {user.uid == tr.sender?.uid ? "-" : "+"}
                     {USDollar.format(tr.amount)} USDC
                   </p>
                   <p className="text-right text-xs">
                     {user.uid == tr.sender?.uid ? "Transfered" : "Received"}{" "}
                     {tr.type == "bill_split" && "- bill split"}
+                    {tr.type == "request" && "- invoice"}
                   </p>
                 </div>
               </div>
