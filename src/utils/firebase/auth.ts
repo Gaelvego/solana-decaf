@@ -24,6 +24,7 @@ export const contactSchema = z.object({
   displayName: z.string(),
   email: z.string(),
   publicKey: z.string(),
+  photoURL: z.string(),
 });
 
 export type ContactT = z.infer<typeof contactSchema>;

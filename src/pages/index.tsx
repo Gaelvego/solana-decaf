@@ -119,6 +119,7 @@ const Home: NextPage = () => {
       displayName: newContact.displayName,
       publicKey: newContact.publicKey,
       uid: newContact.uid,
+      photoURL: newContact.photoURL,
     };
 
     await updateDoc(userDoc, {
@@ -189,6 +190,7 @@ const Home: NextPage = () => {
           displayName: u.displayName,
           email: u.email,
           publicKey: u.publicKey,
+          photoURL: u.photoURL,
         },
         timestamp: 0,
         status: "pending",
@@ -378,7 +380,7 @@ const Home: NextPage = () => {
               <Link href="/account">
                 <Image src="account.svg" width={60} height={200} alt="Logo" />
               </Link>
-              <Link href="/">
+              <Link href="/contacts">
                 <Image src="contacts.svg" width={60} height={200} alt="Logo" />
               </Link>
             </div>

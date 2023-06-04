@@ -51,7 +51,7 @@ const Account: NextPage<AccountProps> = () => {
             <Link href="/account">
               <Image src="account.svg" width={60} height={200} alt="Logo" />
             </Link>
-            <Link href="/">
+            <Link href="/contacts">
               <Image src="contacts.svg" width={60} height={200} alt="Logo" />
             </Link>
           </div>
