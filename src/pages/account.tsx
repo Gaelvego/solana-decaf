@@ -8,11 +8,24 @@ import { api } from "~/utils/api";
 import { signOut, useAuthUser } from "~/utils/firebase/auth";
 import usdcToSol from "~/utils/usdcToSol";
 import Transactions from "~/components/transactions/Transactions";
-import { useCollectionData } from "react-firebase-hooks/firestore";
-import { and, collection, query, where } from "firebase/firestore";
+import {
+  useCollection,
+  useCollectionData,
+} from "react-firebase-hooks/firestore";
+import {
+  and,
+  collection,
+  deleteDoc,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { clientApp } from "~/utils/firebase/app";
-import { TransactionT } from ".";
+import { type TransactionT } from ".";
+import { Toaster, toast } from "react-hot-toast";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
 interface AccountProps {
   children?: React.ReactNode;
@@ -27,8 +40,11 @@ const Account: NextPage<AccountProps> = () => {
   const [loading, user] = useAuthUser();
   const router = useRouter();
   const db = getFirestore(clientApp);
+  const { connection } = useConnection();
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const { sendTransaction } = useWallet();
 
-  const [invoices, loadingInvoices, errorInvoices] = useCollectionData(
+  const [invoices] = useCollectionData(
     query(
       collection(db, "transactions"),
       and(
@@ -38,6 +54,86 @@ const Account: NextPage<AccountProps> = () => {
       )
     )
   );
+  const [invoicesDocs] = useCollection(
+    query(
+      collection(db, "transactions"),
+      and(
+        where("sender.uid", "==", user?.uid || ""),
+        where("type", "==", "request"),
+        where("status", "==", "pending")
+      )
+    )
+  );
+
+  const denyInvoice = async (idx: number) => {
+    const docRef = invoicesDocs?.docs[idx]?.ref;
+
+    if (docRef) {
+      await toast.promise(deleteDoc(docRef), {
+        error: "Something went wrong!",
+        loading: "Denying invoice...",
+        success: "Invoice denied!",
+      });
+    }
+  };
+
+  const fullfillInvoice = async (idx: number) => {
+    const invoice = invoices?.[idx] as TransactionT | undefined;
+
+    if (!invoice) return toast.error("Something went wrong!");
+    if (!invoice.sender?.publicKey) return toast.error("Something went wrong!");
+    if (!invoice.recipient?.publicKey)
+      return toast.error("Something went wrong!");
+
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: new PublicKey(invoice.sender.publicKey),
+        toPubkey: new PublicKey(invoice.recipient.publicKey),
+        lamports: Math.round(
+          usdcToSol({ amount: invoice.amount, currency: "USDC" }) * 1000000000
+        ),
+      })
+    );
+
+    const {
+      context: { slot: minContextSlot },
+      value: { blockhash, lastValidBlockHeight },
+    } = await connection.getLatestBlockhashAndContext();
+
+    try {
+      const signature = await toast.promise(
+        sendTransaction(transaction, connection, {
+          minContextSlot,
+        }),
+        {
+          loading: "Sending transaction...",
+          success: "Transaction sent!",
+          error: "Transaction failed",
+        }
+      );
+
+      await connection.confirmTransaction({
+        blockhash,
+        lastValidBlockHeight,
+        signature,
+      });
+
+      const docRef = invoicesDocs?.docs[idx]?.ref;
+
+      const transactionData: TransactionT = {
+        amount: invoice.amount,
+        recipient: invoice.recipient,
+        sender: invoice.sender,
+        timestamp: Date.now(),
+        status: "completed",
+        type: "request",
+      };
+
+      if (docRef) {
+        await setDoc(docRef, transactionData);
+      }
+    } catch (error) {}
+  };
 
   const { data: balanceData } = api.example.getBalance.useQuery({
     publicKey: user?.publicKey,
@@ -53,7 +149,7 @@ const Account: NextPage<AccountProps> = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="min-h-screen">
-        <div className="min-h-screen w-full bg-white p-8">
+        <div className="mb-20 min-h-screen w-full bg-white p-8">
           <div className="rounded-2xl bg-gradient-to-r from-[#5AA9FF] to-[#5DF1B3]/60">
             <div className="flex w-full flex-col space-y-8 bg-white/30 px-6 py-6">
               <div className="flex justify-between">
@@ -122,38 +218,45 @@ const Account: NextPage<AccountProps> = () => {
             </div>
           </div>
 
-          <div>
-            <h2 className="pb-4 pt-8 text-2xl font-medium text-prussian-blue">
-              Notifications
-            </h2>
-            <p>{errorInvoices && errorInvoices.message}</p>
-            <div className="rounded-2xl bg-gradient-to-br from-[#7DD2FD] to-[#5DF1B3]/[0.17]">
-              <div className="bg-white/30  p-4">
-                {invoices &&
-                  invoices.map((i) => {
-                    const inv = i as TransactionT;
+          {invoices?.length !== 0 && (
+            <div>
+              <h2 className="pb-4 pt-8 text-2xl font-medium text-prussian-blue">
+                Notifications
+              </h2>
+              <div className="rounded-2xl bg-gradient-to-br from-[#7DD2FD] to-[#5DF1B3]/[0.17]">
+                <div className="bg-white/30  p-4">
+                  {invoices &&
+                    invoices.map((i, idx) => {
+                      const inv = i as TransactionT;
 
-                    return (
-                      <div key={inv.timestamp}>
-                        <p className="text-center text-xl">
-                          &quot;{inv.recipient?.displayName.split(" ")[0]} has
-                          sent you a request for {USDollar.format(inv.amount)}{" "}
-                          USDC&quot;
-                        </p>
-                        <div className="flex items-center justify-center space-x-4 pt-4">
-                          <button className="rounded-full bg-[#75DAEB] px-12 py-1 text-center lowercase">
-                            Accept
-                          </button>
-                          <button className="rounded-full bg-[#75DAEB] px-12 py-1 text-center lowercase">
-                            Reject
-                          </button>
+                      return (
+                        <div key={inv.timestamp}>
+                          <p className="text-center text-xl">
+                            &quot;{inv.recipient?.displayName.split(" ")[0]} has
+                            sent you a request for {USDollar.format(inv.amount)}{" "}
+                            USDC&quot;
+                          </p>
+                          <div className="flex items-center justify-center space-x-4 pt-4">
+                            <button
+                              onClick={() => void fullfillInvoice(idx)}
+                              className="rounded-full bg-[#75DAEB] px-12 py-1 text-center lowercase"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => void denyInvoice(idx)}
+                              className="rounded-full bg-[#75DAEB] px-12 py-1 text-center lowercase"
+                            >
+                              Reject
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                </div>
               </div>
             </div>
-          </div>
+          )}
           <div>
             <h2 className="pb-4 pt-8 text-2xl font-medium text-prussian-blue">
               Latest transactions
@@ -177,6 +280,7 @@ const Account: NextPage<AccountProps> = () => {
           </div>
         </div>
       </div>
+      <Toaster position="top-right" reverseOrder={false} />
     </>
   );
 };
