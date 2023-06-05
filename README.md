@@ -1,5 +1,3 @@
-# SnapPay
-
 ![SnapPay](/public/logo.png)
 
 ## What is SnapPay?
