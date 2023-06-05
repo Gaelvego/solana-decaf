@@ -1,5 +1,7 @@
 ![SnapPay](/public/logo.png)
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/tPB6MAMIWn0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 ## What is SnapPay?
 
 SnaPay is a crypto app that simplifies transactions using a prompt-based system and intuitive UI. Send, receive, and split bills effortlessly without prior crypto knowledge. Seamlessly integrate blockchain into your daily life.
