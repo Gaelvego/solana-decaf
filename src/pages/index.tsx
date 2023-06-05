@@ -416,9 +416,13 @@ const Home: NextPage = () => {
                     onClick={() => {
                       setCurrentAction({
                         ...currentAction,
-                        action: "transfer",
+                        action: "createInvoice",
                       });
                       setInputValue("I want to receive money");
+                      actionParsing.createInvoice(
+                        "I want to receive money",
+                        user
+                      );
                     }}
                   >
                     <Image src="/receive.png" height={100} width={100} alt="" />
@@ -431,7 +435,7 @@ const Home: NextPage = () => {
                     onClick={() => {
                       setCurrentAction({
                         ...currentAction,
-                        action: "transfer",
+                        action: "splitBill",
                       });
                       setInputValue("I want to split a bill");
                     }}
@@ -613,7 +617,11 @@ const Home: NextPage = () => {
                     <div>Balance UI</div>
                   )}
                   {currentAction.action === "splitBill" && (
-                    <div>Splitbill ui</div>
+                    <div className="flex items-center justify-center">
+                      <picture>
+                        <img src="/split.svg" alt="" className="max-w-sm" />
+                      </picture>
+                    </div>
                   )}
                 </div>
               )}
