@@ -1,7 +1,4 @@
-import {
-  WalletDisconnectButton,
-  WalletMultiButton,
-} from "@solana/wallet-adapter-react-ui";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import type { NextPage } from "next";
 import { withRedirects } from "~/server/api/firebase/withRedirects";
 import { useWallet } from "@solana/wallet-adapter-react";
