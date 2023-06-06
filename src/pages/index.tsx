@@ -78,22 +78,13 @@ const promptKeywords: Record<action, string[]> = {
     "remaining",
   ],
   createInvoice: [
-    "send me the payment",
-    "send me",
     "pay",
     "invoice",
-    "send me the money",
-    "send me the funds",
-    "give me the payment",
-    "give me the money",
-    "give me the funds",
-    "pay me back",
-    "pay me what you owe",
-    "pay me the money",
-    "pay me the funds",
+    "send me",
+    "give me",
+    "pay me",
     "reimburse me",
-    "settle up with me",
-    "square up with me",
+    "settle",
     "hand me",
   ],
   splitBill: [
@@ -139,6 +130,18 @@ const defineAction = (input: string): action | null => {
     return keywords.some((keyword) => inputWords.includes(keyword));
   });
   return action as action | null;
+};
+
+const _defineAction = (input: string) => {
+  const actions = Object.keys(promptKeywords).filter((action) => {
+    const keywords = promptKeywords[action as action];
+    return keywords.some((keyword) => input.includes(keyword));
+  }) as action[];
+
+  if (actions.length === 0) return null;
+  if (actions.length === 1) return actions[0];
+
+  return null;
 };
 
 const Home: NextPage = () => {
@@ -374,6 +377,9 @@ const Home: NextPage = () => {
                 value={inputValue}
                 onChange={(e) => {
                   const action = defineAction(e.target.value);
+                  const _action = _defineAction(e.target.value);
+
+                  console.log(_action);
 
                   if (action) {
                     actionParsing[action]?.(e.target.value, user);
